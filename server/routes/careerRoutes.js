@@ -12,7 +12,7 @@ const router = express.Router();
 
 // --- Multer setup for resume uploads ---
 // Ensure a directory for uploads exists
-const uploadsDir = path.resolve(process.cwd(), 'uploads');
+const uploadsDir = '/tmp/uploads';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
