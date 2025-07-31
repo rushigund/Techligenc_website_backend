@@ -8,13 +8,15 @@ import { v4 as uuidv4 } from "uuid"; // For generating unique filenames
 import path from "path";
 import fs from "fs"; // For file system operations (deleting resumes)
 
+
 const router = express.Router();
 
 // --- Multer setup for resume uploads ---
 // Ensure a directory for uploads exists
-const uploadsDir = '/tmp/uploads';
+const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.mkdirSync(uploadsDir);
+  console.log("📁 'uploads' directory created.");
 }
 
 const storage = multer.diskStorage({
