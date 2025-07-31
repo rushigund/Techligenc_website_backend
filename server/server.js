@@ -62,7 +62,8 @@ app.use(
   cors({
     //origin: process.env.VITE_API_URL || "http://localhost:8080",
     origin:["https://techligenc-website-backend.onrender.com", 
-      "http://localhost:5173", "http://localhost:8080"],
+      "http://localhost:5173", "http://localhost:8080",
+    "https://techligence-website.vercel.app/"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
