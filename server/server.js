@@ -61,9 +61,8 @@ app.use(limiter);
 app.use(
   cors({
     //origin: process.env.VITE_API_URL || "http://localhost:8080",
-    origin:["https://techligenc-website-backend.onrender.com", 
-      "http://localhost:5173", "http://localhost:8080",
-    "https://techligence-website.vercel.app/"],
+    origin:["https://techligence-website.vercel.app", 
+      "http://localhost:5173", "http://localhost:8080"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
@@ -112,7 +111,7 @@ app.get("/", (req, res) => {
       message: "Techligence Backend API",
       status: "running",
       environment: "development",
-      frontend: process.env.CLIENT_URL || "https://techligence-website.vercel.app/",
+      frontend: process.env.CLIENT_URL || "http://localhost:8080",
       api: {
         health: "/health",
         auth: "/api/auth",
@@ -187,7 +186,7 @@ app.get("*", (req, res) => {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    const redirectUrl = `${process.env.CLIENT_URL || "https://techligence-website.vercel.app/"}${req.path}`;
+    const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:8080"}${req.path}`;
     console.log(`🔄 Redirecting to frontend: ${redirectUrl}`);
     return res.redirect(redirectUrl);
   }
@@ -202,7 +201,7 @@ const startServer = () => {
   server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(
-      `🌐 Client URL: ${process.env.CLIENT_URL || "https://techligence-website.vercel.app/"}`,
+      `🌐 Client URL: ${process.env.CLIENT_URL || "http://localhost:5173"}`,
     );
   });
 };
