@@ -6,15 +6,22 @@ import { updateSingleContentItem } from "../utils/contentIngestor.js"; // NEW: I
 import multer from "multer"; // For handling file uploads (resumes)
 import { v4 as uuidv4 } from "uuid"; // For generating unique filenames
 import path from "path";
+import { fileURLToPath } from "url"; // NEW: Import to handle ES module paths
 import fs from "fs"; // For file system operations (deleting resumes)
+
 
 const router = express.Router();
 
+// --- Define __dirname in ES module scope ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // --- Multer setup for resume uploads ---
 // Ensure a directory for uploads exists
-const uploadsDir = path.resolve(process.cwd(), 'uploads');
+const uploadsDir = path.join(__dirname, "../uploads"); // Store uploads in server/uploads, not server/routes/uploads
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.mkdirSync(uploadsDir);
+  console.log("📁 'uploads' directory created.");
 }
 
 const storage = multer.diskStorage({
