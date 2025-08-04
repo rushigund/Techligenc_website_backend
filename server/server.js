@@ -11,6 +11,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 // Import Pinecone service functions
 import { initializePinecone, ensurePineconeIndex } from './services/pineconeService.js'; // Adjust path as needed
@@ -225,8 +226,22 @@ app.get("*", (req, res) => {
 
   // Otherwise, serve the main HTML file of your frontend application.
   // The client-side router will then handle the specific path (e.g., /about, /contact).
-  const buildPath = path.join(__dirname, "../dist");
-  res.sendFile(path.join(buildPath, "index.html"));
+  const indexPath = path.join(__dirname, "../dist", "index.html");
+
+  // Check if the file exists before trying to send it.
+  // This provides a clearer error message in production if the frontend hasn't been built correctly.
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // This part is crucial for debugging deployment issues.
+    console.error(`❌ SPA Fallback Error: index.html not found at ${indexPath}`);
+    console.error("This likely means the frontend application has not been built or is not in the correct location.");
+    res.status(404).json({
+        success: false,
+        message: "Application resource not found. This is not an API endpoint.",
+        info: "If you are trying to access the frontend, it seems it has not been built or deployed correctly with the backend."
+    });
+  }
 });
 
 // Start server function
