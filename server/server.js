@@ -76,6 +76,7 @@ const allowedOriginsFromEnv = process.env.CORS_ALLOWED_ORIGINS
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8080",
+  process.env.CLIENT_URL,
   ...allowedOriginsFromEnv,
 ];
 
@@ -210,25 +211,21 @@ app.use((err, req, res, next) => {
 
 // SPA fallback route - serve React app for all non-API routes
 app.get("*", (req, res) => {
-  console.log(`📍 Route requested: ${req.method} ${req.path}`);
-  console.log(`🔍 Headers:`, req.headers);
+  // This middleware catches all GET requests that haven't been handled by other routes.
+  // It's essential for Single Page Applications (SPAs) that use client-side routing.
 
+  // First, check if the request is for an API endpoint that wasn't found.
   if (req.path.startsWith("/api/")) {
-    console.log(`❌ API route not found: ${req.path}`);
+    console.warn(`❌ 404 - API route not found: ${req.method} ${req.path}`);
     return res.status(404).json({
       success: false,
       message: "API route not found",
     });
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:8080"}${req.path}`;
-    console.log(`🔄 Redirecting to frontend: ${redirectUrl}`);
-    return res.redirect(redirectUrl);
-  }
-
+  // Otherwise, serve the main HTML file of your frontend application.
+  // The client-side router will then handle the specific path (e.g., /about, /contact).
   const buildPath = path.join(__dirname, "../dist");
-  console.log(`📁 Serving React app from: ${buildPath}`);
   res.sendFile(path.join(buildPath, "index.html"));
 });
 
