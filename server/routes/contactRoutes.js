@@ -21,7 +21,7 @@ const escapeHTML = (str) => {
 const router = express.Router();
 
 router.post(
-  "/contact",
+  "/",
   [
     // Validation rules
     body("name").trim().notEmpty().withMessage("Name is required"),

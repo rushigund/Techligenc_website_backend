@@ -50,7 +50,7 @@ const upload = multer({
 // --- Public Routes ---
 
 // GET /api/career/jobs - Get all job listings
-router.get("/career/jobs", async (req, res) => {
+router.get("/jobs", async (req, res) => {
   try {
     const jobListings = await JobListing.find({});
     res.json({
@@ -66,7 +66,7 @@ router.get("/career/jobs", async (req, res) => {
 
 // POST /api/career/apply - Submit a job application
 router.post(
-  "/career/apply",
+  "/apply",
   upload.single('resume'), // 'resume' is the field name from the frontend
   [
     body("fullName").notEmpty().withMessage("Full name is required."),
@@ -135,7 +135,7 @@ router.post(
 
 // POST /api/career/jobs - Add a new job listing (Admin only)
 router.post(
-  "/career/jobs",
+  "/jobs",
   authenticateToken,
   authorizeRoles('admin'),
   [
@@ -175,7 +175,7 @@ router.post(
 
 // PUT /api/career/jobs/:jobId - Update a job listing (Admin only)
 router.put(
-  "/career/jobs/:jobId",
+  "/jobs/:jobId",
   authenticateToken,
   authorizeRoles('admin'),
   [
@@ -219,7 +219,7 @@ router.put(
 
 // DELETE /api/career/jobs/:jobId - Delete a job listing (Admin only)
 router.delete(
-  "/career/jobs/:jobId",
+  "/jobs/:jobId",
   authenticateToken,
   authorizeRoles('admin'),
   async (req, res) => {

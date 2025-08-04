@@ -182,10 +182,10 @@ app.get("/debug", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
-app.use("/api", productRoutes);
-app.use("/api", blogRoutes);
-app.use("/api", contactRoutes);
-app.use("/api", careerRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/blog", blogRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/career", careerRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/admin", adminIngestionRoutes); // NEW: Register admin ingestion routes
 app.use("/api/otp", otpRoutes);
