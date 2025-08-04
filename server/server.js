@@ -68,26 +68,35 @@ app.use(limiter);
   }),
 );*/
 
-//New CORS configuration with allowed origins
-// This allows specific origins and Vercel preview deployments
+// Define allowed origins for CORS. Prioritize environment variables for production flexibility.
+const allowedOriginsFromEnv = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
 
 const allowedOrigins = [
-  "https://techligence-website.vercel.app",
   "http://localhost:5173",
-  "http://localhost:8080"
+  "http://localhost:8080",
+  ...allowedOriginsFromEnv,
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow curl/postman
-      if (
-        allowedOrigins.includes(origin) ||
-        /\.vercel\.app$/.test(new URL(origin).hostname) // Allow Vercel preview deployments
-      ) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(new Error(`❌ CORS error: ${origin} not allowed`));
+
+      // Allow Vercel preview deployments dynamically and safely
+      try {
+        if (/\.vercel\.app$/.test(new URL(origin).hostname)) { // Allow any *.vercel.app subdomain
+          return callback(null, true);
+        }
+      } catch (e) { /* Malformed origin, fall through to error */ }
+
+      return callback(new Error(`❌ CORS error: The origin "${origin}" is not allowed.`));
     },
     credentials: true,
   })
@@ -225,11 +234,29 @@ app.get("*", (req, res) => {
 
 // Start server function
 const startServer = () => {
+  server.on("error", (error) => {
+    if (error.syscall !== "listen") {
+      throw error;
+    }
+
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+      case "EACCES":
+        console.error(`❌ Port ${PORT} requires elevated privileges.`);
+        process.exit(1);
+        break;
+      case "EADDRINUSE":
+        console.error(`❌ Port ${PORT} is already in use. Please stop the other process or use a different port.`);
+        process.exit(1);
+        break;
+      default:
+        throw error;
+    }
+  });
+
   server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(
-      `🌐 Client URL: ${process.env.CLIENT_URL || "http://localhost:5173"}`,
-    );
+    console.log(`🌐 Allowed Client Origins: ${allowedOrigins.join(", ")}`);
   });
 };
 
