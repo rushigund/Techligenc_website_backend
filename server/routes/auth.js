@@ -4,6 +4,7 @@ import { body, validationResult } from "express-validator";
 import rateLimit from "express-rate-limit";
 import User from "../models/User.js";
 import { authenticateToken } from "../middleware/auth.js";
+import { resolveSoa } from "dns";
 
 const router = express.Router();
 
@@ -399,51 +400,5 @@ router.post("/refresh", authenticateToken, async (req, res) => {
   }
 });
 
-//GET method for blogposts
-router.get("/blogposts", async (req, res) => {
-  try {
-    const blogPosts = await BlogPost.find({}).sort({ publishedDate: -1 });  // Fetch all posts, sorted by date
-    res.json({
-      success: true,
-      meesage: "Blog posts fetched successfully!",
-      data: blogPosts,
-    });
-  } catch (error) {
-    console.error("Error fetching blog posts:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch blog posts", error: error.message });
-  }
-});
-    body("content").notEmpty().withMessage("Content is required"),  
-  async (req, res) => { 
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: "Validation failed",
-          errors: errors.array(),
-        });
-      }
-
-      const newPost = new BlogPost(req.body);
-      await newPost.save();
-
-      // NEW: Post-save hook for RAG
-      await updateSingleContentItem('blog', newPost, 'upsert');
-
-      res.status(201).json({
-        success: true,
-        message: "Blog post created successfully",
-        data: newPost,
-      });
-    } catch (error) {
-      console.error     ("Error creating blog post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to create blog post",
-        error: error.message,
-      });
-    }
-  }
 
 export default router;

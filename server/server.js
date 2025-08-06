@@ -183,7 +183,7 @@ app.get("/debug", (req, res) => {
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/blog", blogRoutes);
+app.use("/api/blogposts", blogRoutes); // Changed from /api/blog
 app.use("/api/contact", contactRoutes);
 app.use("/api/career", careerRoutes);
 app.use("/api/chatbot", chatbotRoutes);
