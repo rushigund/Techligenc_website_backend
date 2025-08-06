@@ -4,43 +4,24 @@ import JobListing from "../models/JobListing.js"; // Adjust path to your JobList
 import { authenticateToken, authorizeRoles } from "../middleware/auth.js"; // Import auth and authorize middleware
 import { updateSingleContentItem } from "../utils/contentIngestor.js"; // NEW: Import contentIngestor for RAG updates
 import multer from "multer"; // For handling file uploads (resumes)
-import { v4 as uuidv4 } from "uuid"; // For generating unique filenames
-import path from "path";
-import { fileURLToPath } from "url"; // NEW: Import to handle ES module paths
-import fs from "fs"; // For file system operations (deleting resumes)
-
+// import { v4 as uuidv4 } from "uuid"; // Can be used for unique names in cloud storage
+// import path from "path"; // Can be used for file extensions
 
 const router = express.Router();
 
-// --- Define __dirname in ES module scope ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// --- Multer setup for resume uploads ---
-// Ensure a directory for uploads exists
-const uploadsDir = path.join(__dirname, "../uploads"); // Store uploads in server/uploads, not server/routes/uploads
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-  console.log("📁 'uploads' directory created.");
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir); // Resumes will be stored in the 'uploads' directory
-  },
-  filename: (req, file, cb) => {
-    // Generate a unique filename to prevent collisions
-    const uniqueSuffix = uuidv4();
-    const fileExtension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
-  },
-});
+// --- Multer setup for resume uploads (Cloud Storage Recommended for Render) ---
+// Using memoryStorage to handle the file as a buffer in memory before uploading to a cloud service.
+// This avoids saving files to Render's ephemeral disk, which will be lost on deploys or restarts.
+const storage = multer.memoryStorage();
 
 // Filter for allowed file types (PDF, DOC, DOCX)
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'application/pdf' ||
-      file.mimetype === 'application/msword' || // .doc
-      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // .docx
+  const allowedMimes = [
+    'application/pdf',
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+  ];
+  if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false);
@@ -87,12 +68,7 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // If validation fails, and a file was uploaded, delete it
-      if (req.file) {
-        fs.unlink(req.file.path, (err) => {
-          if (err) console.error("Error deleting uploaded file after validation failure:", err);
-        });
-      }
+      // No file to delete from disk as it's in memory. It will be discarded.
       return res.status(400).json({ success: false, message: "Validation failed", errors: errors.array() });
     }
 
@@ -101,8 +77,13 @@ router.post(
     }
 
     try {
-      // In a real application, you would save application details to a database
-      // and potentially store the resume file path, or upload to cloud storage.
+      // --- Upload to Cloud Storage (e.g., AWS S3, Google Cloud Storage, Cloudinary) ---
+      // This is a placeholder. You would use the respective SDK to upload the file buffer.
+      // const resumeUrl = await uploadToCloudStorage(req.file.buffer, req.file.originalname);
+      const resumeUrl = `https://fake-cloud-storage.com/resumes/${Date.now()}-${req.file.originalname}`; // Placeholder URL
+      console.log(`Resume would be uploaded to: ${resumeUrl}`);
+
+      // Now, save the application details with the URL of the uploaded resume.
       const newApplication = {
         fullName: req.body.fullName,
         email: req.body.email,
@@ -111,27 +92,24 @@ router.post(
         jobDepartment: req.body.jobDepartment,
         jobLocation: req.body.jobLocation,
         coverLetter: req.body.coverLetter || "",
-        resumePath: req.file.path, // Store the path to the uploaded resume
+        resumeUrl: resumeUrl, // Store the URL from cloud storage
         submittedAt: new Date(),
       };
 
       console.log("New Job Application Received:", newApplication);
-      // Example: Save to a 'JobApplication' model or send to an HR system
+      // TODO: Save `newApplication` to a 'JobApplication' model in your database.
       // const savedApplication = await JobApplication.create(newApplication);
 
       res.status(200).json({
         success: true,
         message: "Your job application has been submitted successfully!",
-        // data: savedApplication // Return saved application data if applicable
+        // data: savedApplication // Return saved application data if you create a model for it
       });
     } catch (error) {
       console.error("Error submitting job application:", error);
-      // If an error occurs after file upload, delete the file
-      if (req.file) {
-        fs.unlink(req.file.path, (err) => {
-          if (err) console.error("Error deleting uploaded file after submission error:", err);
-        });
-      }
+      // If an error occurs (e.g., database error after a successful cloud upload),
+      // you might want to implement logic to delete the file from your cloud storage
+      // to prevent orphaned files.
       res.status(500).json({ success: false, message: "Failed to submit application", error: error.message });
     }
   }
